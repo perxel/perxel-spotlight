@@ -7,3 +7,4 @@ dist
 .dev.vars
 next-env.d.ts
 *.tsbuildinfo
+.idea

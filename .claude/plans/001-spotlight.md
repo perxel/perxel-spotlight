@@ -1,6 +1,6 @@
 # Plan 018: `@perxel/spotlight` (search or ask, as a standalone React package)
 
-Status (2026-10-13): phases 0 to 7 done locally in all three repos, committed, nothing pushed or published. Next: phase 8 (owner's browser pass, secrets, deploy order, GitHub repo, npm 0.1.0). See "Progress" at the end.
+Status (2026-10-13): released. `@perxel/spotlight@0.1.0` on npm (tag v0.1.0, github.com/perxel/perxel-spotlight); perxel-mcp (ingest) and perxel.com (Ask on the package) deployed; phucbm.com committed and pushed, its deploy hit the Cloudflare free-plan KV write limit (10048) and re-runs after 00:00 UTC. Owner browser pass done before release. Open: npm trusted publishing for the next release; phucbm.com's own capped OpenRouter key (it uses the borrowed one).
 Written: 2026-10-12, from a discussion with the owner the same day.
 Related: plan 010 (Ask Perxel), plan 013 (Ask actions), plan 014 (search or ask), plan 015 (search gate), plan 017 (social kit: the packaging precedent), folio-2026-vol2 plan 001 ("MCP and Ask (deferred)", superseded by this plan for phucbm.com).
 
@@ -315,3 +315,11 @@ Token cost per turn (input tokens, one question each, Claude Haiku): `contentSou
 2. Secrets: `wrangler secret put` on `perxel-website-2026`: `OPENROUTER_API_KEY`, `TURNSTILE_SECRET` (the "perxel-mcp Ask" widget's secret), `ASK_INGEST_TOKEN`; on perxel-mcp: `ASK_INGEST_TOKEN`; on `phucbm-com-2026-vol2`: `OPENROUTER_API_KEY` (its own capped key, owner task), `TURNSTILE_SECRET` ("phucbm.com Ask" widget).
 3. Deploy order: perxel-mcp first (ingest), then perxel.com, then phucbm.com.
 4. Create `perxel/perxel-spotlight` on GitHub, first npm publish (token or `npm login`), then trusted publishing; switch both sites from the injected copy to `^0.1.0`.
+
+## Release (2026-10-13)
+
+- Secrets set: `perxel-website-2026` (`OPENROUTER_API_KEY`, `TURNSTILE_SECRET` from the "perxel-mcp Ask" widget, `ASK_INGEST_TOKEN`), `perxel-mcp` (`ASK_INGEST_TOKEN`), `phucbm-com-2026-vol2` (`OPENROUTER_API_KEY` borrowed, `TURNSTILE_SECRET` from "phucbm.com Ask").
+- perxel-mcp deployed (5daa3eb): `/ask/ingest` answers 401 without the token, `/ask/ingest/spend` with it.
+- `@perxel/spotlight@0.1.0` published by the owner (npm 2FA), tag `v0.1.0`. No GitHub release yet: `publish.yml` would try 0.1.0 again and fail (the action has no skip for an existing version); the next version goes through a release once trusted publishing is set on npmjs.com.
+- perxel.com deployed (7e45d00, on `^0.1.0`; the push also carried another session's b991d48). Smoke check: 9 of 10 at first, "front HTML differs" was a one-off right after deploy (identical when checked again). Live: `GET /api/ask` 204, a question without a token `verify_failed`.
+- phucbm.com: pushed (7425d5d); the deploy failed at OpenNext's cache upload, `your account has reached the free usage limit for this operation for today [code: 10048]` (KV writes, the whole account: several deploys that day). The live site kept the previous version. Re-run queued for 00:05 UTC. Each deploy rewrites every prerendered page into KV, so a day with many deploys across perxel.com, phucbm.com and the MCPs can hit it again.

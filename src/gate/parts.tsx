@@ -6,6 +6,7 @@ import {
   Fragment,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
@@ -13,10 +14,11 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react"
-import {conversationState, type ConversationState} from "../core/conversation.js"
+import {conversationState, type ConversationState} from "../core/storage.js"
+import {mergeCopy} from "../core/copy.js"
 import {buildIndex, type SearchDoc, type SearchIndex, type SearchResult, type Snippet} from "../core/search.js"
 import type {Action} from "../types.js"
-import {useSpotlight, type SpotlightState} from "./provider.js"
+import {useSpotlight, type SpotlightState} from "../react/provider.js"
 import {useSearchAsk} from "./useSearchAsk.js"
 
 const ACTION_PREFIX = "action:"
@@ -72,7 +74,8 @@ export interface UseGateOptions {
 /** Everything a gate needs, for a gate built from scratch. `Gate.Root` calls it and shares it with the parts. */
 export function useGate({open, onOpenChange}: UseGateOptions) {
   const s = useSpotlight()
-  const {mode, copy, actions, navigate} = s
+  const {mode, actions, navigate} = s
+  const copy = useMemo(() => mergeCopy(s.copy), [s.copy])
   const maxInput = s.ask?.maxInput ?? 1000
   const [query, setQuery] = useState("")
   const index = useIndex(s)

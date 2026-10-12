@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {latestFromVisitor, sourcesOf, textOf, toolOutputOf} from "./conversation.js"
+import {latestFromVisitor, sourcesOf, textOf, toolOutputOf} from "./messages.js"
 
 describe("message helpers", () => {
   const answer = {

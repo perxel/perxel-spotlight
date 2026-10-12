@@ -1,4 +1,3 @@
-import "@perxel/spotlight/liquid.css"
 import type {ReactNode} from "react"
 
 export const metadata = {title: "@perxel/spotlight example"}

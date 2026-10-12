@@ -36,6 +36,10 @@
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     },
+    "./gate": {
+      "types": "./dist/gate/index.d.ts",
+      "default": "./dist/gate/index.js"
+    },
     "./chat": {
       "types": "./dist/chat/index.d.ts",
       "default": "./dist/chat/index.js"

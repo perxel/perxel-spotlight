@@ -1,6 +1,9 @@
 "use client"
 
 import type {ComponentProps, ComponentPropsWithoutRef, ReactNode, Ref} from "react"
+import * as Dialog from "@radix-ui/react-dialog"
+import {memo} from "react"
+import {Streamdown} from "streamdown"
 import {StickToBottom, useStickToBottomContext} from "use-stick-to-bottom"
 import type {AskChat} from "./useAskChat.js"
 
@@ -87,4 +90,46 @@ function Submit({chat, send, stop, ...props}: {chat: AskChat; send?: ReactNode; 
   )
 }
 
-export const Chat = {Messages, Content, ScrollButton, Composer, Submit}
+/**
+ * An answer's markdown, streamed safely (Streamdown), unstyled: style it through `className`.
+ * Links open in place (the panel decides where they go); memoised on the text.
+ */
+const Markdown = memo(
+  ({text, className}: {text: string; className?: string}) => (
+    <Streamdown className={className} linkSafety={{enabled: false}}>
+      {text}
+    </Streamdown>
+  ),
+  (a, b) => a.text === b.text && a.className === b.className,
+)
+
+/**
+ * The panel's dialog (Radix): non-modal by default, so the page stays usable behind it; a press
+ * outside does not close it (only `Chat.Close` or Escape). `modal` for a sheet over the page.
+ * State: `data-state` (open/closed), `data-spotlight-panel`. Put a `Chat.Title` inside.
+ */
+function Panel({open, onOpenChange, modal = false, children, ...props}: {open: boolean; onOpenChange: (open: boolean) => void; modal?: boolean} & ComponentPropsWithoutRef<"div">) {
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange} modal={modal}>
+      <Dialog.Portal>
+        <Dialog.Content
+          data-spotlight-panel=""
+          aria-describedby={undefined}
+          onInteractOutside={(e) => {
+            if (!modal) e.preventDefault()
+          }}
+          {...props}
+        >
+          {children}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
+
+/** The panel's accessible title (shown; hide it yourself if you want it for screen readers only). */
+const Title = Dialog.Title
+/** Closes the panel. */
+const Close = Dialog.Close
+
+export const Chat = {Panel, Title, Close, Messages, Content, ScrollButton, Composer, Submit, Markdown}

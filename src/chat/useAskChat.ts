@@ -3,7 +3,8 @@
 import {useChat} from "@ai-sdk/react"
 import {DefaultChatTransport, type ChatTransport, type UIMessage} from "ai"
 import {useEffect, useMemo, useRef, useState} from "react"
-import {sourcesOf, textOf, toolOutputOf} from "../core/conversation.js"
+import {mergeCopy} from "../core/copy.js"
+import {calledTool, sourcesOf, textOf, toolOutputOf} from "../core/messages.js"
 import {useSpotlight} from "../react/provider.js"
 import type {Action, AskConfig, ChatMessage} from "../types.js"
 
@@ -90,7 +91,8 @@ export function useAskChat({uiTools = []}: UseAskChatOptions = {}) {
   const ui = useMemo(() => new Set([...uiTools, ...actionTools.keys()]), [uiTools.join("\u0000"), actionTools])
 
   const busy = status === "submitted" || status === "streaming"
-  const errorCode = error ? (error.message in s.copy.errors ? error.message : "generic") : null
+  const copy = useMemo(() => mergeCopy(s.copy), [s.copy])
+  const errorCode = error ? (error.message in copy.errors ? error.message : "generic") : null
   const lastAssistant = [...list].reverse().find((m) => m.role === "assistant")
   const text = (m: ChatMessage) => textOf(m, ui)
   // Waiting: sent, and no answer text yet.
@@ -205,7 +207,9 @@ export function useAskChat({uiTools = []}: UseAskChatOptions = {}) {
     /** A message's text (answers: after the last content tool call). */
     textOf: text,
     sourcesOf,
-    copy: s.copy,
+    /** True when the message called `tool` (e.g. a handoff tool that shows contact options). */
+    calledTool,
+    copy,
     chat,
   }
 }

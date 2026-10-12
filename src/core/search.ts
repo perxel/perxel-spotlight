@@ -1,6 +1,10 @@
 // The search engine: instant, client-side search over a small set of documents (a site's pages,
 // posts, actions). No React, no Next, no dependencies: pure functions, safe anywhere.
-// Imports nothing.
+// Imports only `fold`.
+
+import {fold} from "./fold.js"
+
+export {fold}
 
 /** One searchable thing. The host builds these (usually at build time) from its own content. */
 export interface SearchDoc {
@@ -53,22 +57,6 @@ export interface SearchResult {
   titleMarks: [start: number, end: number][]
   /** Set when some typed word is not in the title but is in one of the doc's `snippets`. */
   snippet?: Snippet
-}
-
-/**
- * Lowercase, accents and other combining marks removed, `đ` folded to `d`, a dot or apostrophe
- * inside a word dropped ("Next.js" → "nextjs"), anything else that is not a letter or digit
- * turned into a space. "Dịch vụ & SEO" → "dich vu seo".
- */
-export function fold(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{M}+/gu, "")
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .replace(/(?<=[\p{L}\p{N}])[.'’](?=[\p{L}\p{N}])/gu, "")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim()
 }
 
 /** The title with in-word dots split ("Next.js" → "next js"), so "next js" finds it too. */

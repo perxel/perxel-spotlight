@@ -1,8 +1,8 @@
 "use client"
 
+import "./liquid.css"
 import * as Dialog from "@radix-ui/react-dialog"
-import {memo, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject} from "react"
-import {Streamdown} from "streamdown"
+import {Suspense, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject} from "react"
 import {Chat} from "../chat/parts.js"
 import {useAskChat} from "../chat/useAskChat.js"
 import {useSpotlight} from "../react/provider.js"
@@ -11,14 +11,6 @@ import {useLiquid} from "./context.js"
 import {ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, ArrowUpRightIcon, ChevronDownIcon, FileTextIcon, SquareIcon, SquarePenIcon, XIcon} from "./icons.js"
 import {cx, PHONE_QUERY, useMedia} from "./util.js"
 
-const Markdown = memo(
-  ({text}: {text: string}) => (
-    <Streamdown className="sp-md" linkSafety={{enabled: false}}>
-      {text}
-    </Streamdown>
-  ),
-  (a, b) => a.text === b.text,
-)
 
 /**
  * The liquid panel: a floating card on desktop (non-modal: the page stays usable), a bottom sheet
@@ -139,13 +131,15 @@ export default function LiquidPanel({open, onOpenChange}: PanelProps) {
 
           {ActionView && view.kind === "action" ? (
             <div className="sp-view" key={view.key} data-lenis-prevent="">
-              <ActionView input={view.input} messages={chat.messages} conversationId={chat.messages.length ? chat.id : null} back={chat.back} close={chat.close}/>
+              <Suspense fallback={null}>
+                <ActionView input={view.input} messages={chat.messages} conversationId={chat.messages.length ? chat.id : null} back={chat.back} close={chat.close}/>
+              </Suspense>
             </div>
           ) : (
             <>
               <Chat.Messages className="sp-messages">
                 <Chat.Content className="sp-messages-content" viewportProps={{className: "sp-messages-viewport sp-scroll"}}>
-                  {liquid.privacyNote && <div className="sp-privacy">{liquid.privacyNote}</div>}
+                  {liquid.privacyNote && <div className="sp-privacy"><Suspense fallback={null}>{liquid.privacyNote}</Suspense></div>}
                   {chat.messages.map((m, i) => {
                     const text = chat.textOf(m)
                     const sources = m.role === "assistant" ? chat.sourcesOf(m) : []
@@ -153,7 +147,7 @@ export default function LiquidPanel({open, onOpenChange}: PanelProps) {
                     if (!text && !sources.length && !action) return null
                     return (
                       <div key={m.id} data-role={m.role} className={cx("sp-message", m.role === "user" && i > 0 && "sp-message-gap")}>
-                        {text && (m.role === "assistant" ? <div className="sp-answer"><Markdown text={text}/></div> : <p className="sp-bubble">{text}</p>)}
+                        {text && (m.role === "assistant" ? <div className="sp-answer"><Chat.Markdown text={text} className="sp-md"/></div> : <p className="sp-bubble">{text}</p>)}
                         {sources.length > 0 && (
                           <details className="sp-sources">
                             <summary>
@@ -189,7 +183,7 @@ export default function LiquidPanel({open, onOpenChange}: PanelProps) {
                   {chat.errorCode && !chat.busy && (
                     <p className="sp-error" role="alert">{copy.errors[chat.errorCode] ?? copy.errors.generic}</p>
                   )}
-                  {!chat.busy && handoff}
+                  {!chat.busy && handoff && <Suspense fallback={null}>{handoff}</Suspense>}
                 </Chat.Content>
                 <Chat.ScrollButton className="sp-scroll-button" aria-label={copy.scrollToEnd}>
                   <ArrowDownIcon/>
@@ -199,7 +193,7 @@ export default function LiquidPanel({open, onOpenChange}: PanelProps) {
               <Chat.Composer chat={chat} ref={setFoot} className="sp-panel-foot" textareaProps={{ref: composer, className: "sp-textarea", maxLength: s.ask?.maxInput ?? 1000}}>
                 {liquid.tide && <div aria-hidden className="sp-tide"><span/><span/><span/></div>}
                 <div className="sp-composer-row">
-                  {liquid.composerExtra?.(chat) ?? <span/>}
+                  <Suspense fallback={<span/>}>{liquid.composerExtra?.(chat) ?? <span/>}</Suspense>
                   <Chat.Submit chat={chat} className="sp-fill sp-submit" send={<ArrowUpIcon/>} stop={<SquareIcon className="sp-stop-icon"/>}/>
                 </div>
               </Chat.Composer>

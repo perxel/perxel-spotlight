@@ -151,6 +151,8 @@ describe("contentSource", () => {
   it("cuts passages and sections", () => {
     expect(passagesOf("short\n\nThis paragraph talks about Cloudflare Workers and speed at length.", ["cloudflare"], 2, 30)[0]).toMatch(/Cloudflare/)
     expect(sectionOf("# A\n\none\n\n## B\n\ntwo\n\n## C\n\nthree", "b")).toBe("## B\n\ntwo")
+    // Plain text: headings are short lines of their own.
+    expect(sectionOf("Intro text here.\n\nWhat a spec needs\n\nOne concern per spec.\n\nWhat broke\n\nThe lock.", "spec needs")).toBe("What a spec needs\n\nOne concern per spec.")
   })
 })
 

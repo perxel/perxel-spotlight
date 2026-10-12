@@ -1,8 +1,9 @@
 "use client"
 
-// `@perxel/spotlight/liquid`: the default skin. Glass gate and panel, themed with CSS variables
-// (import `@perxel/spotlight/liquid.css` once). The gate and the panel are lazy chunks: a page's
-// first load holds only the provider and the triggers.
+// `@perxel/spotlight/liquid`: the default skin. Glass gate and panel, themed with CSS variables.
+// The gate and the panel are lazy chunks that import the skin's CSS themselves, so a page's first
+// load holds only the provider and the triggers, and no stylesheet. (`@perxel/spotlight/liquid.css`
+// is also exported, for a bundler that does not load CSS imported from a package.)
 
 import {SpotlightProvider} from "../react/provider.js"
 import type {GateProps, Loader, PanelProps, SpotlightProps} from "../types.js"
@@ -24,3 +25,7 @@ export function SpotlightLiquid({logo, privacyNote, handoff, composerExtra, uiTo
 }
 
 export type {LiquidOptions}
+// The light parts of `./react`, so a site on the skin imports from one place.
+export {Trigger, useSpotlight, isMac, shortcutLabel} from "../react/provider.js"
+export {localStorageAdapter} from "../core/storage.js"
+export {turnstileWidget} from "../react/turnstile.js"

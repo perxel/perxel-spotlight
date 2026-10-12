@@ -72,20 +72,38 @@ export function passagesOf(body: string, words: string[], count: number, length:
   })
 }
 
-/** The section of a markdown body under the heading that matches `section` (until the next heading of its level or higher). */
+/** A plain-text heading: a short line with no closing punctuation, alone in its paragraph. */
+function plainHeading(lines: string[], i: number): boolean {
+  const l = lines[i]!.trim()
+  return l.length > 0 && l.length <= 80 && !/[.:;,!?)]$/.test(l) && !lines[i - 1]?.trim() && !lines[i + 1]?.trim()
+}
+
+/**
+ * The section of a body under the heading that matches `section`: a markdown heading (until the
+ * next one of its level or higher), else, for plain text where headings became their own lines,
+ * a short heading-like line (until the next one).
+ */
 export function sectionOf(body: string, section: string): string | null {
   const lines = body.split("\n")
   const want = fold(section)
   const at = lines.findIndex((l) => /^#{1,6}\s/.test(l) && fold(l.replace(/^#+\s*/, "")).includes(want))
-  if (at < 0) return null
-  const level = lines[at]!.match(/^#+/)![0].length
-  let end = lines.findIndex((l, i) => i > at && /^#{1,6}\s/.test(l) && l.match(/^#+/)![0].length <= level)
+  if (at >= 0) {
+    const level = lines[at]!.match(/^#+/)![0].length
+    let end = lines.findIndex((l, i) => i > at && /^#{1,6}\s/.test(l) && l.match(/^#+/)![0].length <= level)
+    if (end < 0) end = lines.length
+    return lines.slice(at, end).join("\n").trim()
+  }
+  const plain = lines.findIndex((l, i) => plainHeading(lines, i) && fold(l).includes(want))
+  if (plain < 0) return null
+  let end = lines.findIndex((_, i) => i > plain && plainHeading(lines, i))
   if (end < 0) end = lines.length
-  return lines.slice(at, end).join("\n").trim()
+  return lines.slice(plain, end).join("\n").trim()
 }
 
 function headingsOf(body: string): string[] {
-  return body.split("\n").filter((l) => /^#{2,3}\s/.test(l)).map((l) => l.replace(/^#+\s*/, "").trim())
+  const lines = body.split("\n")
+  const md = lines.filter((l) => /^#{2,3}\s/.test(l)).map((l) => l.replace(/^#+\s*/, "").trim())
+  return md.length ? md : lines.filter((_, i) => plainHeading(lines, i)).map((l) => l.trim())
 }
 
 /**

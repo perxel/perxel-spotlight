@@ -1,7 +1,8 @@
 "use client"
 
 import {useEffect, useLayoutEffect, useState} from "react"
-import {Gate, useGateContext} from "../react/gate.js"
+import "./liquid.css"
+import {Gate, useGateContext} from "../gate/parts.js"
 import type {GateProps} from "../types.js"
 import {useLiquid} from "./context.js"
 import {ArrowDownIcon, ArrowUpIcon, ArrowUpRightIcon, CornerDownLeftIcon, SearchIcon, XIcon} from "./icons.js"

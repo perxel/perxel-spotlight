@@ -1,56 +1,7 @@
-// The conversation kept in the browser, and helpers that read chat messages. No React, no AI SDK:
-// the gate asks whether there is a conversation without loading the chat code.
+// Helpers that read chat messages (AI SDK `UIMessage`s, structurally). No React, no AI SDK.
 
-import type {ChatMessage, ChatPart, PersistAdapter, StoredConversation} from "../types.js"
-
-const DAY = 24 * 60 * 60 * 1000
-
-/**
- * Keeps the conversation in `localStorage` under `key` for `days` after the visitor's last
- * question. Private mode or blocked storage: the conversation just does not survive a reload.
- */
-export function localStorageAdapter({key = "spotlight-chat", days = 7}: {key?: string; days?: number} = {}): PersistAdapter {
-  return {
-    read() {
-      try {
-        const raw = localStorage.getItem(key)
-        if (!raw) return null
-        const v = JSON.parse(raw) as StoredConversation
-        if (typeof v.id !== "string" || !Array.isArray(v.messages)) return null
-        if (!(Date.now() - v.savedAt < days * DAY)) {
-          localStorage.removeItem(key)
-          return null
-        }
-        return v
-      } catch {
-        return null
-      }
-    },
-    write(v) {
-      try {
-        if (v) localStorage.setItem(key, JSON.stringify(v))
-        else localStorage.removeItem(key)
-      } catch {
-        // Storage blocked.
-      }
-    },
-  }
-}
-
-/** Nowhere: the conversation lives as long as the page. */
-export const noPersist: PersistAdapter = {read: () => null, write: () => {}}
-
-/**
- * What a question from the gate does: `none` (no conversation), `recent` (continues it) or
- * `stale` (kept, but its last question is older than `continueHours`: a new one starts).
- */
-export type ConversationState = "none" | "recent" | "stale"
-
-export function conversationState(persist: PersistAdapter, continueHours = 24): ConversationState {
-  const v = persist.read()
-  if (!v?.messages.length) return "none"
-  return Date.now() - v.savedAt < continueHours * 60 * 60 * 1000 ? "recent" : "stale"
-}
+import type {ChatMessage, ChatPart} from "../types.js"
+import {EMAIL_IN_TEXT} from "./fold.js"
 
 /** A tool part (`tool-<name>`, or `dynamic-tool` with `toolName`). */
 export function toolName(part: ChatPart): string | null {
@@ -103,7 +54,6 @@ export function calledTool(m: ChatMessage, tool: string): boolean {
   return m.parts.some((p) => toolName(p) === tool)
 }
 
-const EMAIL_IN_TEXT = /[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[a-z]{2,}/gi
 const PHONE_IN_TEXT = /\+?\d[\d\s.-]{6,}\d/g
 
 /** The latest email (or, for `contact`, email or phone number) in the visitor's own messages. */
@@ -121,7 +71,3 @@ export function latestFromVisitor(messages: ChatMessage[], kind: "email" | "cont
   return undefined
 }
 
-/** The first email address in a text. */
-export function emailIn(text: string): string | undefined {
-  return text.match(new RegExp(EMAIL_IN_TEXT.source, "i"))?.[0]
-}

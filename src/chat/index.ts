@@ -3,4 +3,4 @@
 
 export {useAskChat, defaultTransport, type AskChat, type ChatView, type UseAskChatOptions} from "./useAskChat.js"
 export {Chat} from "./parts.js"
-export {sourcesOf, textOf, toolOutputOf, latestFromVisitor} from "../core/conversation.js"
+export {calledTool, sourcesOf, textOf, toolOutputOf, latestFromVisitor} from "../core/messages.js"

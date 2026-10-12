@@ -14,8 +14,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react"
-import {localStorageAdapter} from "../core/conversation.js"
-import {mergeCopy} from "../core/copy.js"
+import {localStorageAdapter} from "../core/storage.js"
 import type {
   Action,
   AskConfig,
@@ -39,7 +38,8 @@ export interface SpotlightState {
   search: SearchConfig | undefined
   ask: AskConfig | undefined
   actions: Action[]
-  copy: SpotlightCopy
+  /** The site's copy overrides; the gate and the panel merge them with the English defaults (`mergeCopy`), so the defaults stay out of first load. */
+  copy: Partial<SpotlightCopy>
   navigate: Navigate
   /** Where the conversation is kept (`ask.persist`, default `localStorage`). */
   persist: PersistAdapter
@@ -74,7 +74,7 @@ const STUB: SpotlightState = {
   search: undefined,
   ask: undefined,
   actions: [],
-  copy: mergeCopy(),
+  copy: {},
   navigate: noop,
   persist: {read: () => null, write: noop},
   gateOpen: false,
@@ -102,9 +102,9 @@ export function shortcutLabel(shortcut: string | false = "mod+k"): string | null
   return isMac() ? `⌘${key}` : `Ctrl ${key}`
 }
 
-/** Default navigation: a hash on this page scrolls; anything else is a page load. */
+/** Default navigation: a hash on this page scrolls; another site opens in a new tab; anything else is a page load. */
 export const defaultNavigate: Navigate = (url, {newTab}) => {
-  if (newTab) {
+  if (newTab || new URL(url, location.href).origin !== location.origin) {
     window.open(url, "_blank", "noopener")
     return
   }
@@ -159,7 +159,7 @@ export function SpotlightProvider({
 }: SpotlightProps) {
   const mode: SpotlightMode = search && ask ? "both" : search ? "search" : ask ? "ask" : "none"
   const available = enabled && mode !== "none"
-  const merged = useMemo(() => mergeCopy(copy), [copy])
+  const merged = useMemo(() => copy ?? {}, [copy])
   const persist = useMemo(() => (ask?.persist === false ? {read: () => null, write: () => {}} : ask?.persist ?? localStorageAdapter()), [ask?.persist])
 
   const Gate = useLazy<GateProps>(gate)

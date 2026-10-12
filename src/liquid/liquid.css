@@ -1,0 +1,995 @@
+/* @perxel/spotlight: the liquid skin. Plain CSS, `sp-` classes, themed with the variables below
+   (set them on `:root` or on the skin's `className`). Neutral defaults: grey glass, system font. */
+
+:root {
+    /* The accent: marks in results, the highlighted row's tint, the tide, send button hover. */
+    --sp-accent: #1f6feb;
+    /* Text on the accent-tinted glass (the highlighted row). */
+    --sp-ink: #0b1f4d;
+    --sp-text: #111;
+    --sp-muted: #4e4e4e;
+    --sp-subtle: #777;
+    /* The panel's reading area, the user's bubble, a quiet fill (errors, kbd). */
+    --sp-surface: #fff;
+    --sp-bubble: #f2f2f2;
+    --sp-quiet: #f6f6f6;
+    /* The fill button (send, stop): background and hover. */
+    --sp-button: #111;
+    --sp-button-text: #fff;
+    --sp-button-hover: var(--sp-accent);
+    /* The glass: fill, rim, inner glow, lift (outer shadow). */
+    --sp-glass-fill: rgba(255, 255, 255, .5);
+    --sp-glass-edge: rgba(255, 255, 255, .8);
+    --sp-glow: rgba(255, 255, 255, .7);
+    --sp-lift: 0 0 0 .5px rgba(0, 0, 0, .14), 0 2px 6px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .08);
+    /* The glass over the page (gate) is denser: text sits on it over any background. */
+    --sp-gate-fill: rgba(255, 255, 255, .66);
+    /* The panel header pill, on the white reading area. */
+    --sp-pill-fill: rgba(242, 242, 242, .6);
+    --sp-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --sp-font-display: var(--sp-font);
+    --sp-display-weight: 400;
+    /* The page behind the gate. */
+    --sp-dim: rgba(0, 0, 0, .2);
+    --sp-dim-blur: 12px;
+    /* Stacking: the gate at `--sp-z`, the panel one under, the phone backdrop two under. */
+    --sp-z: 59;
+}
+
+/* ------------------------------------------------------------------ */
+/* The glass. `.sp-liquid` is the white tone; `.sp-liquid-accent` the  */
+/* pale accent tone. A bright rim along the top, a lighter top half, a */
+/* faint dark rim at the bottom, a soft inner glow, a hairline + lift. */
+/* ------------------------------------------------------------------ */
+.sp-liquid {
+    --sp-fill: var(--sp-glass-fill);
+    --sp-edge: var(--sp-glass-edge);
+    --sp-inner: var(--sp-glow);
+    --sp-shadow: var(--sp-lift);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%), var(--sp-fill);
+    -webkit-backdrop-filter: blur(16px) saturate(2);
+    backdrop-filter: blur(16px) saturate(2);
+    box-shadow: inset 0 0 0 1px var(--sp-edge),
+    inset 0 1.5px 0 #fff,
+    inset 0 -1px 0 color-mix(in srgb, var(--sp-ink) 8%, transparent),
+    inset 0 0 14px var(--sp-inner),
+    var(--sp-shadow);
+    transition: box-shadow .15s;
+}
+
+.sp-liquid-accent {
+    --sp-fill: color-mix(in srgb, var(--sp-accent) 12%, rgba(255, 255, 255, .7));
+    --sp-edge: color-mix(in srgb, var(--sp-accent) 28%, transparent);
+    --sp-inner: color-mix(in srgb, var(--sp-accent) 22%, transparent);
+    color: var(--sp-ink);
+}
+
+/* Over the page: denser and blurrier. */
+.sp-glass {
+    --sp-fill: var(--sp-gate-fill);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    backdrop-filter: blur(24px) saturate(1.8);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sp-liquid {
+        background: #fff;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .sp-liquid-accent {
+        background: color-mix(in srgb, var(--sp-accent) 12%, #fff);
+    }
+}
+
+/* The fill button (send, stop). */
+.sp-fill {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--sp-button);
+    border-radius: 9999px;
+    padding: 0;
+    background: var(--sp-button);
+    color: var(--sp-button-text);
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, transform .15s;
+}
+
+.sp-fill svg {
+    width: 16px;
+    height: 16px;
+}
+
+.sp-fill:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+@media (hover: hover) {
+    .sp-fill:not(:disabled):hover {
+        background: var(--sp-button-hover);
+        border-color: var(--sp-button-hover);
+    }
+}
+
+.sp-fill:not(:disabled):active {
+    transform: scale(.96);
+}
+
+.sp-truncate {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* A thin scrollbar inside the skin. */
+.sp-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .2) transparent;
+}
+
+.sp-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sp-scroll::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, .2);
+}
+
+/* ------------------------------------------------------------------ */
+/* The gate                                                            */
+/* ------------------------------------------------------------------ */
+.sp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--sp-z);
+    background: var(--sp-dim);
+    -webkit-backdrop-filter: blur(var(--sp-dim-blur));
+    backdrop-filter: blur(var(--sp-dim-blur));
+}
+
+.sp-gate {
+    position: fixed;
+    inset-inline: 12px;
+    top: 64px;
+    z-index: var(--sp-z);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 640px;
+    margin-inline: auto;
+    color: var(--sp-text);
+    font-family: var(--sp-font);
+    outline: none;
+}
+
+@media (min-width: 1024px) {
+    .sp-gate {
+        top: 14vh;
+        max-height: calc(86vh - 48px);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-overlay[data-state="open"] { animation: sp-fade-in .2s both; }
+    .sp-overlay[data-state="closed"] { animation: sp-fade-out .2s both; }
+    .sp-gate[data-state="open"] { animation: sp-gate-in .2s both; }
+    .sp-gate[data-state="closed"] { animation: sp-gate-out .2s both; }
+}
+
+@keyframes sp-fade-in { from { opacity: 0; } }
+@keyframes sp-fade-out { to { opacity: 0; } }
+@keyframes sp-gate-in { from { opacity: 0; transform: translateY(-8px) scale(.98); } }
+@keyframes sp-gate-out { to { opacity: 0; transform: scale(.98); } }
+
+/* Close: phones only, a glass circle floating above the box's top right corner. */
+.sp-gate-close {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 9999px;
+    color: var(--sp-muted);
+    cursor: pointer;
+    transition: transform .15s, color .15s;
+}
+
+.sp-gate-close svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sp-gate-close:hover { color: var(--sp-text); }
+.sp-gate-close:active { transform: scale(.9); }
+
+@media (min-width: 1024px) {
+    .sp-gate-close { display: none; }
+}
+
+/* The box: a glass pill. */
+.sp-gate-box {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 12px;
+    border-radius: 9999px;
+    padding-left: 20px;
+    padding-right: 10px;
+}
+
+.sp-gate-box:focus-within {
+    --sp-fill: color-mix(in srgb, var(--sp-gate-fill), #fff 40%);
+}
+
+@media (min-width: 1024px) {
+    .sp-gate-box { padding-right: 20px; }
+}
+
+.sp-gate-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--sp-muted);
+}
+
+/* 16px below 1024px: iOS Safari zooms the page into any smaller field. */
+.sp-gate-input {
+    flex: 1;
+    min-width: 0;
+    height: 56px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+}
+
+.sp-gate-input::placeholder {
+    color: var(--sp-muted);
+    opacity: 1;
+}
+
+@media (min-width: 1024px) {
+    .sp-gate-input {
+        height: 64px;
+        font-size: 18px;
+    }
+}
+
+.sp-gate-send {
+    width: 36px;
+    height: 36px;
+}
+
+.sp-gate-hints {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    color: var(--sp-muted);
+    font-size: 13px;
+}
+
+.sp-kbd {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    min-width: 24px;
+    border-radius: 6px;
+    padding-inline: 6px;
+    background: rgba(0, 0, 0, .06);
+    font-family: inherit;
+}
+
+.sp-kbd svg {
+    width: 14px;
+    height: 14px;
+}
+
+.sp-kbd-arrows { margin-right: 12px; }
+
+.sp-hint-enter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+/* A hint: always mounted, it slides open (width through a one-column grid) and fades in. */
+.sp-hint {
+    display: grid;
+    grid-template-columns: 0fr;
+    opacity: 0;
+    transform: translateX(4px);
+    transition: grid-template-columns .25s cubic-bezier(.2, .8, .2, 1), opacity .2s, transform .25s cubic-bezier(.2, .8, .2, 1);
+}
+
+.sp-hint > * {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sp-hint[data-on] {
+    grid-template-columns: 1fr;
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-fade-in { animation: sp-fade-in .2s both; }
+}
+
+/* The results: one glass group. */
+.sp-gate-results {
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 22px;
+}
+
+.sp-gate-results > .sp-scroll {
+    position: relative;
+    max-height: 60svh;
+    padding: 6px;
+}
+
+@media (min-width: 1024px) {
+    .sp-gate-results > .sp-scroll { max-height: min(60vh, 440px); }
+}
+
+.sp-gate-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sp-row {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    border-radius: 16px;
+    padding: 10px 16px;
+    background: transparent;
+    color: var(--sp-text);
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    text-decoration: none;
+    outline: none;
+    cursor: pointer;
+    transition: transform .15s, background-color .15s;
+}
+
+.sp-row:hover:not([aria-selected="true"]) {
+    background-color: rgba(255, 255, 255, .6);
+}
+
+.sp-row:active { transform: scale(.985); }
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-row { animation: sp-rise .3s both; }
+}
+
+@keyframes sp-rise { from { opacity: 0; transform: translateY(-4px); } }
+
+.sp-row-text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.sp-row-title { line-height: 1.25; }
+
+.sp-row-sub {
+    margin-top: 2px;
+    color: var(--sp-muted);
+    font-size: 13px;
+    line-height: 1.25;
+}
+
+.sp-row mark {
+    background: transparent;
+    color: var(--sp-accent);
+}
+
+.sp-row-kind {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    color: var(--sp-muted);
+    font-size: 13px;
+}
+
+.sp-row-arrow {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--sp-subtle);
+    transition: color .15s;
+}
+
+.sp-row:hover .sp-row-arrow { color: var(--sp-text); }
+.sp-row[aria-selected="true"] .sp-row-arrow { color: var(--sp-ink); }
+
+/* The arrow-key highlight: one piece of the accent glass sliding under the rows. */
+.sp-hl {
+    --sp-shadow: 0 0 #0000;
+    position: absolute;
+    top: 0;
+    inset-inline: 6px;
+    z-index: 0;
+    border-radius: 16px;
+    pointer-events: none;
+    opacity: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    transition: transform .22s cubic-bezier(.2, .8, .2, 1), height .22s cubic-bezier(.2, .8, .2, 1), opacity .15s;
+}
+
+.sp-hl[data-on] { opacity: 1; }
+.sp-hl[data-jump] { transition: opacity .15s; }
+
+/* ------------------------------------------------------------------ */
+/* The panel                                                           */
+/* ------------------------------------------------------------------ */
+.sp-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--sp-z) - 2);
+    background: rgba(0, 0, 0, .3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-backdrop[data-state="open"] { animation: sp-fade-in .3s both; }
+    .sp-backdrop[data-state="closed"] { animation: sp-fade-out .3s both; }
+}
+
+.sp-backdrop[data-state="closed"] { pointer-events: none; }
+
+/* Phones: a bottom sheet. Desktop: a floating card, bottom right. */
+.sp-panel {
+    --sp-top: 56px;
+    --sp-bottom: 112px;
+    --sp-pill: 52px;
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: calc(var(--sp-z) - 1);
+    display: flex;
+    flex-direction: column;
+    height: 92svh;
+    overflow: hidden;
+    border-top: 1px solid rgba(0, 0, 0, .1);
+    border-radius: 20px 20px 0 0;
+    background: var(--sp-surface);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, .12);
+    color: var(--sp-text);
+    font-family: var(--sp-font);
+    outline: none;
+}
+
+@media (min-width: 1024px) {
+    .sp-panel {
+        --sp-pill: 40px;
+        inset-inline: auto;
+        right: 24px;
+        bottom: 24px;
+        width: 420px;
+        height: min(640px, calc(100dvh - 48px));
+        border: 1px solid rgba(0, 0, 0, .15);
+        border-radius: 24px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .08), 0 24px 64px rgba(0, 0, 0, .10);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-panel[data-state="open"] { animation: sp-sheet-in .3s both; }
+    .sp-panel[data-state="closed"] { animation: sp-sheet-out .3s both; }
+
+    @media (min-width: 1024px) {
+        .sp-panel[data-state="open"] { animation: sp-card-in .2s both; }
+        .sp-panel[data-state="closed"] { animation: sp-card-out .2s both; }
+    }
+}
+
+@keyframes sp-sheet-in { from { transform: translateY(100%); } }
+@keyframes sp-sheet-out { to { transform: translateY(100%); } }
+@keyframes sp-card-in { from { opacity: 0; transform: translateY(16px); } }
+@keyframes sp-card-out { to { opacity: 0; transform: translateY(16px); } }
+
+/* The header: a glass pill over the conversation; behind it white down to the pill's middle,
+   fading out by its bottom edge, so messages show blurred only through its lower half. */
+.sp-panel-head {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 10;
+    padding: 6px 12px 4px;
+    touch-action: none;
+}
+
+.sp-panel-head::before,
+.sp-panel-foot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.sp-panel-head::before {
+    background: linear-gradient(to bottom, var(--sp-surface) calc(100% - 4px - var(--sp-pill) / 2), transparent calc(100% - 4px));
+}
+
+@media (min-width: 1024px) {
+    .sp-panel-head {
+        padding-top: 8px;
+        touch-action: auto;
+    }
+}
+
+.sp-grab {
+    width: 36px;
+    height: 4px;
+    margin: 0 auto 6px;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, .15);
+}
+
+@media (min-width: 1024px) {
+    .sp-grab { display: none; }
+}
+
+.sp-panel-pill {
+    --sp-fill: var(--sp-pill-fill);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-radius: 9999px;
+    padding: 4px 4px 4px 16px;
+}
+
+.sp-panel-title {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-family: var(--sp-font-display);
+    font-size: 18px;
+    font-weight: var(--sp-display-weight);
+    line-height: 1.3;
+}
+
+.sp-logo {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sp-logo > * {
+    width: 100%;
+    height: 100%;
+}
+
+.sp-icon-button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 9999px;
+    padding: 0;
+    background: transparent;
+    color: var(--sp-muted);
+    cursor: pointer;
+    transition: background-color .15s, color .15s;
+}
+
+.sp-icon-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.sp-icon-button:hover {
+    background: rgba(0, 0, 0, .05);
+    color: var(--sp-text);
+}
+
+.sp-back { margin-left: -12px; }
+
+@media (min-width: 1024px) {
+    .sp-icon-button {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* The conversation. */
+.sp-messages {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow-y: hidden;
+}
+
+.sp-messages-viewport {
+    height: 100%;
+}
+
+.sp-messages-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: calc(var(--sp-top) + 8px) 16px calc(var(--sp-bottom) + 16px);
+}
+
+.sp-privacy {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.375;
+    color: var(--sp-ink);
+}
+
+.sp-privacy a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.sp-message {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.sp-message[data-role="user"] {
+    max-width: 85%;
+    margin-left: auto;
+    align-items: flex-end;
+}
+
+.sp-message-gap { margin-top: 12px; }
+
+.sp-bubble,
+.sp-answer {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.625;
+    letter-spacing: .15px;
+}
+
+.sp-bubble {
+    border-radius: 18px;
+    padding: 8px 14px;
+    background: var(--sp-bubble);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.sp-answer { overflow-wrap: anywhere; }
+
+.sp-md > :first-child { margin-top: 0; }
+.sp-md > :last-child { margin-bottom: 0; }
+.sp-md p { margin: 8px 0; }
+.sp-md ul { margin: 8px 0; padding-left: 20px; list-style: disc; }
+.sp-md ol { margin: 8px 0; padding-left: 20px; list-style: decimal; }
+.sp-md li { margin: 2px 0; }
+.sp-md strong { font-weight: 600; }
+.sp-md a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.sp-md code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+
+.sp-sources {
+    color: var(--sp-subtle);
+    font-size: 13px;
+}
+
+.sp-sources summary {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    list-style: none;
+    cursor: pointer;
+}
+
+.sp-sources summary::-webkit-details-marker { display: none; }
+
+.sp-chevron {
+    width: 14px;
+    height: 14px;
+    transition: transform .15s;
+}
+
+.sp-sources[open] .sp-chevron { transform: rotate(180deg); }
+
+.sp-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.sp-sources-list a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--sp-muted);
+    text-decoration: none;
+    text-underline-offset: 2px;
+}
+
+.sp-sources-list a:hover { text-decoration: underline; }
+
+.sp-sources-list svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+/* The row under an answer that reopens the view it prepared. */
+.sp-action-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+    border: 1px solid rgba(0, 0, 0, .1);
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: transparent;
+    color: var(--sp-muted);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s, color .15s;
+}
+
+.sp-action-row svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--sp-subtle);
+}
+
+.sp-action-row:hover {
+    border-color: rgba(0, 0, 0, .2);
+    background: var(--sp-bubble);
+    color: var(--sp-text);
+}
+
+.sp-waiting {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--sp-subtle);
+    font-size: 14px;
+}
+
+.sp-waiting .sp-logo {
+    width: 16px;
+    height: 16px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-pulse { animation: sp-pulse 2s cubic-bezier(.4, 0, .6, 1) infinite; }
+}
+
+@keyframes sp-pulse { 50% { opacity: .5; } }
+
+.sp-error {
+    margin: 0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: var(--sp-quiet);
+    color: var(--sp-muted);
+    font-size: 14px;
+}
+
+.sp-scroll-button {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--sp-bottom) + 12px);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    transform: translateX(-50%);
+    border: 1px solid rgba(0, 0, 0, .15);
+    border-radius: 9999px;
+    padding: 0;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    color: var(--sp-text);
+    cursor: pointer;
+}
+
+.sp-scroll-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* The composer: one glass box at the bottom, over a white gradient (and the tide). */
+.sp-panel-foot {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 10;
+    margin: 0;
+    padding: 4px 12px max(12px, env(safe-area-inset-bottom));
+}
+
+.sp-panel-foot::before {
+    top: -24px;
+    background: linear-gradient(to top, var(--sp-surface) calc(100% - 40px), transparent);
+}
+
+.sp-panel-foot > .sp-textarea,
+.sp-panel-foot > .sp-composer-row {
+    position: relative;
+}
+
+/* The textarea and the row under it share one glass box, drawn behind both. */
+.sp-panel-foot::after {
+    content: "";
+    position: absolute;
+    inset: 4px 12px max(12px, env(safe-area-inset-bottom));
+    z-index: 0;
+    border-radius: 20px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%), var(--sp-glass-fill);
+    -webkit-backdrop-filter: blur(16px) saturate(2);
+    backdrop-filter: blur(16px) saturate(2);
+    box-shadow: inset 0 0 0 1px var(--sp-glass-edge),
+    inset 0 1.5px 0 #fff,
+    inset 0 -1px 0 color-mix(in srgb, var(--sp-ink) 8%, transparent),
+    inset 0 0 14px var(--sp-glow),
+    var(--sp-lift);
+}
+
+.sp-panel-foot:focus-within::after {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%), rgba(255, 255, 255, .7);
+}
+
+.sp-textarea {
+    z-index: 1;
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    max-height: 160px;
+    field-sizing: content;
+    resize: none;
+    border: 0;
+    padding: 12px 16px 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+}
+
+.sp-textarea::placeholder {
+    color: var(--sp-subtle);
+    opacity: 1;
+}
+
+@media (min-width: 1024px) {
+    .sp-textarea { font-size: 15px; }
+}
+
+.sp-composer-row {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 8px 16px;
+}
+
+.sp-submit {
+    width: 32px;
+    height: 32px;
+}
+
+.sp-stop-icon {
+    width: 12px !important;
+    height: 12px !important;
+    fill: currentColor;
+}
+
+/* The tide: soft pools of the accent rising from the panel's bottom edge behind the composer,
+   drifting sideways and flattening out of step (`transform` only, still under reduced motion). */
+.sp-tide {
+    position: absolute;
+    inset: -24px 0 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background: linear-gradient(to top, color-mix(in srgb, var(--sp-accent) 14%, transparent), transparent 70%);
+}
+
+.sp-tide > span {
+    position: absolute;
+    left: -30%;
+    bottom: -80px;
+    width: 120%;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--sp-accent) 26%, transparent), transparent);
+    transform-origin: 50% 100%;
+    will-change: transform;
+}
+
+.sp-tide > span:nth-child(2) {
+    left: auto;
+    right: -30%;
+}
+
+.sp-tide > span:nth-child(3) {
+    left: 15%;
+    width: 70%;
+    height: 150px;
+    bottom: -55px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--sp-accent) 20%, transparent), transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sp-tide > span { animation: sp-swell-a 7s ease-in-out infinite; }
+    .sp-tide > span:nth-child(2) { animation-name: sp-swell-b; animation-duration: 9s; }
+    .sp-tide > span:nth-child(3) { animation-name: sp-swell-c; animation-duration: 5.5s; }
+}
+
+@keyframes sp-swell-a {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1, .75); }
+    30% { transform: translate3d(18%, 0, 0) scale(1.15, 1); }
+    60% { transform: translate3d(32%, 0, 0) scale(1, .8); }
+    80% { transform: translate3d(12%, 0, 0) scale(1.1, .95); }
+}
+
+@keyframes sp-swell-b {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.1, 1); }
+    25% { transform: translate3d(-14%, 0, 0) scale(.95, .75); }
+    55% { transform: translate3d(-34%, 0, 0) scale(1.15, 1); }
+    80% { transform: translate3d(-18%, 0, 0) scale(1, .8); }
+}
+
+@keyframes sp-swell-c {
+    0%, 100% { transform: translate3d(-30%, 0, 0) scale(.9, .75); }
+    50% { transform: translate3d(35%, 0, 0) scale(1.2, 1); }
+}
+
+/* An action's view (a form) fills the panel under the header. */
+.sp-view {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: var(--sp-top);
+}

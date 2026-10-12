@@ -1,0 +1,100 @@
+{
+  "name": "@perxel/spotlight",
+  "version": "0.0.0",
+  "description": "Search or ask, like Spotlight: a ⌘K box that searches a site as you type and hands a question to an AI chat on Enter. Headless React parts, an optional liquid glass skin, and a Web-standard server helper.",
+  "license": "MIT",
+  "author": "Perxel (https://perxel.com)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/perxel/perxel-spotlight.git"
+  },
+  "homepage": "https://github.com/perxel/perxel-spotlight#readme",
+  "bugs": "https://github.com/perxel/perxel-spotlight/issues",
+  "keywords": [
+    "search",
+    "spotlight",
+    "command palette",
+    "cmdk",
+    "chat",
+    "ai",
+    "ai-sdk",
+    "mcp",
+    "react",
+    "headless"
+  ],
+  "type": "module",
+  "packageManager": "pnpm@10.22.0",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./chat": {
+      "types": "./dist/chat/index.d.ts",
+      "default": "./dist/chat/index.js"
+    },
+    "./liquid": {
+      "types": "./dist/liquid/index.d.ts",
+      "default": "./dist/liquid/index.js"
+    },
+    "./liquid.css": "./dist/liquid/liquid.css",
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
+    "./build": {
+      "types": "./dist/build/index.d.ts",
+      "default": "./dist/build/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/liquid/liquid.css dist/liquid/liquid.css",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.2.0",
+    "streamdown": "^2.6.0",
+    "use-stick-to-bottom": "^1.1.6"
+  },
+  "peerDependencies": {
+    "@ai-sdk/react": ">=4",
+    "ai": ">=7",
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "@ai-sdk/react": {
+      "optional": true
+    },
+    "ai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@ai-sdk/react": "4.0.119",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "ai": "7.0.116",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

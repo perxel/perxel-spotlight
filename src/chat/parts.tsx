@@ -72,7 +72,7 @@ function Composer({chat, children, textareaProps, ...props}: {chat: AskChat; chi
         }}
         placeholder={chat.copy.placeholderAsk}
         aria-label={chat.copy.placeholderAsk}
-        maxLength={1000}
+        maxLength={chat.maxInput}
         rows={1}
         {...textareaProps}
       />

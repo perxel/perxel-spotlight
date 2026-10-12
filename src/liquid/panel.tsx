@@ -190,7 +190,7 @@ export default function LiquidPanel({open, onOpenChange}: PanelProps) {
                 </Chat.ScrollButton>
               </Chat.Messages>
 
-              <Chat.Composer chat={chat} ref={setFoot} className="sp-panel-foot" textareaProps={{ref: composer, className: "sp-textarea", maxLength: s.ask?.maxInput ?? 1000}}>
+              <Chat.Composer chat={chat} ref={setFoot} className="sp-panel-foot" textareaProps={{ref: composer, className: "sp-textarea"}}>
                 {liquid.tide && <div aria-hidden className="sp-tide"><span/><span/><span/></div>}
                 <div className="sp-composer-row">
                   <Suspense fallback={<span/>}>{liquid.composerExtra?.(chat) ?? <span/>}</Suspense>

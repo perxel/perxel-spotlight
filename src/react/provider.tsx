@@ -162,6 +162,9 @@ export function SpotlightProvider({
   const merged = useMemo(() => copy ?? {}, [copy])
   const persist = useMemo(() => (ask?.persist === false ? {read: () => null, write: () => {}} : ask?.persist ?? localStorageAdapter()), [ask?.persist])
 
+  if (ask && !panel && typeof process !== "undefined" && process.env?.NODE_ENV !== "production") {
+    console.warn("[spotlight] `ask` is set but no `panel` module: questions have nowhere to go. Pass `panel` (or use a skin).")
+  }
   const Gate = useLazy<GateProps>(gate)
   const Panel = useLazy<PanelProps>(ask ? panel : undefined)
 

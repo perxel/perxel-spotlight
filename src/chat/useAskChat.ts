@@ -210,6 +210,8 @@ export function useAskChat({uiTools = []}: UseAskChatOptions = {}) {
     /** True when the message called `tool` (e.g. a handoff tool that shows contact options). */
     calledTool,
     copy,
+    /** Characters in one question (`ask.maxInput`). */
+    maxInput,
     chat,
   }
 }

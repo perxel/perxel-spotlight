@@ -1,0 +1,25 @@
+{
+  "name": "spotlight-example-next",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3200",
+    "build": "next build",
+    "start": "next start --port 3200"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "4.0.119",
+    "@openrouter/ai-sdk-provider": "3.1.0",
+    "@perxel/spotlight": "link:../..",
+    "ai": "7.0.116",
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "6.0.3"
+  }
+}

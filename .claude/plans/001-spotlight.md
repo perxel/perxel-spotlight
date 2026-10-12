@@ -1,6 +1,6 @@
 # Plan 018: `@perxel/spotlight` (search or ask, as a standalone React package)
 
-Status: decided 2026-10-12 (see "Decisions"). Nothing built yet. Next: phase 0.
+Status (2026-10-13): phases 0 to 7 done locally in all three repos, committed, nothing pushed or published. Next: phase 8 (owner's browser pass, secrets, deploy order, GitHub repo, npm 0.1.0). See "Progress" at the end.
 Written: 2026-10-12, from a discussion with the owner the same day.
 Related: plan 010 (Ask Perxel), plan 013 (Ask actions), plan 014 (search or ask), plan 015 (search gate), plan 017 (social kit: the packaging precedent), folio-2026-vol2 plan 001 ("MCP and Ask (deferred)", superseded by this plan for phucbm.com).
 
@@ -283,4 +283,35 @@ Each phase ends with the checks listed. Browser checks need the owner's go-ahead
 
 ## phucbm.com findings
 
-Filled in during phase 6.
+Each found while putting phucbm.com (and perxel.com) on the package; all fixed in the package unless marked.
+
+| # | Found | Change |
+|---|---|---|
+| 1 | A `link:` dependency brought the package's own dev copies of React and the AI SDK (two `ai` types, "Invalid hook call" risk) | Both sites use a pnpm injected dependency (`file:` + `dependenciesMeta.injected`); `scripts/sync.sh` in the package copies `dist/` in after a change; README "Local development" |
+| 2 | Both sites needed the same client Turnstile code | `turnstileWidget({siteKey})` in `./react` (pairs with `turnstile()` on the server); perxel.com still uses its own `components/ask/turnstile.ts` (works; can switch later) |
+| 3 | No markdown renderer for a headless panel | `Chat.Markdown` (Streamdown, unstyled) |
+| 4 | No dialog for a headless panel (Radix is the package's dependency, not the site's) | `Chat.Panel`, `Chat.Title`, `Chat.Close` |
+| 5 | The default `navigate` opened other sites in the same tab (phucbm.com's rule: outside links in a new tab) | Default opens other origins in a new tab |
+| 6 | `./react` re-exported the gate's parts, so the provider's chunk carried Radix and the search engine into every page | Gate parts moved to `./gate`, imported only by the lazy gate module |
+| 7 | Core modules too coarse: one helper pulled every message helper into first load; the English defaults sat in the provider | Core split (`storage`, `messages`, `fold`); default copy merged in the gate and chat; `useSpotlight().copy` is the site's overrides |
+| 8 | The skin's CSS as a site-wide import added render-blocking CSS to every page | The skin's gate and panel chunks import it; `liquid.css` still exported |
+| 9 | phucbm.com has no build-time TypeScript loader (perxel.com uses jiti) | None needed: its index is a prerendered route (`/search.json`) and `search.load` fetches it; README shows both ways |
+| 10 | `contentSource`'s `get_page({section})` assumed markdown headings; phucbm.com's body text has them as plain lines | Plain-text heading fallback (`sectionOf`, `headingsOf`) |
+| 11 | Pages without a CSS reset (the example) broke the rows (`content-box`) | The skin sets `border-box` on its own elements |
+| 12 | The skin's spacing in px looked smaller than the original on perxel.com (18px root on desktop) | Spacing in rem, as the original Tailwind classes were; px kept where the original used px |
+| 13 | (phucbm.com) `next dev` does not read `.dev.vars` (no `initOpenNextCloudflareForDev`), so Ask has no secrets there | Not a package issue: its CLAUDE.md says to put them in `.env.local` to try Ask in dev; `pnpm preview` reads `.dev.vars` |
+
+Token cost per turn (input tokens, one question each, Claude Haiku): `contentSource` on the example's pages 1,567 (one search); phucbm.com similar size; perxel.com through `mcpSource` 4,192 for a WordPress question (two tools). Same order as perxel-mcp's `ask.turn` rows; not measured over a question set.
+
+## Progress (2026-10-13)
+
+- **Package** `~/PHUC-LOCAL/perxel/perxel-spotlight` (local git, no GitHub repo yet): core, `./react`, `./gate`, `./chat`, `./liquid`, `./server`, `./build`; 38 tests; `examples/next` with the modes and an Ask route on all three kinds of source (each answered a real question through OpenRouter); README, CHANGELOG. Checked headlessly (CDP script): gate in each mode, desktop and phone, a streamed answer in the panel, the conversation stored.
+- **perxel.com** (`main`, 2 commits, not pushed): phase 1 (search core from the package: index byte-identical, 32 queries identical) and phase 5 (Ask on the package, `/api/ask` on this Worker, `/api/ask/summary`, `/api/ask/lead`). Real questions answered locally (pricing through `mcpSource`, `prepare_lead` keeping only the written phone number, no token refused). Performance: no prerendered HTML references the gate, panel, index or skin CSS; every static path exists; first-load JS +2.5 KB brotli on every page against the pre-package build (target was 1 KB; what it is: `performance.md`, "Ask on @perxel/spotlight"). Parity screenshots (headless, old build vs new): desktop gate matches; on phones the new one fixes rows that overflowed sideways.
+- **perxel-mcp** (`main`, 1 commit, not pushed): `/ask/ingest` (turn log, refusals, lead flag, today's spend), tests.
+- **phucbm.com** (`main`, 1 commit, not pushed): search (`/search.json`), Ask (`contentSource` + `get_stats` + `get_repos`), paper-styled gate and panel, colophon section. Its three test questions answered correctly; `check-paper` and `check-seo` pass.
+
+**Left for phase 8 (needs the owner):**
+1. Browser pass on perxel.com (desktop and iPhone) and phucbm.com, in `pnpm dev` or `pnpm preview`.
+2. Secrets: `wrangler secret put` on `perxel-website-2026`: `OPENROUTER_API_KEY`, `TURNSTILE_SECRET` (the "perxel-mcp Ask" widget's secret), `ASK_INGEST_TOKEN`; on perxel-mcp: `ASK_INGEST_TOKEN`; on `phucbm-com-2026-vol2`: `OPENROUTER_API_KEY` (its own capped key, owner task), `TURNSTILE_SECRET` ("phucbm.com Ask" widget).
+3. Deploy order: perxel-mcp first (ingest), then perxel.com, then phucbm.com.
+4. Create `perxel/perxel-spotlight` on GitHub, first npm publish (token or `npm login`), then trusted publishing; switch both sites from the injected copy to `^0.1.0`.

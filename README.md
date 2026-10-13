@@ -2,12 +2,18 @@
 
 Search or ask, like Spotlight. Press ⌘K: the box searches your site as you type, in the browser, with no request and no model call. Press Enter with nothing highlighted and the question goes to an AI chat that answers from your site.
 
+![The liquid skin on perxel.com: results as you type "next", the typed word marked in each row](https://raw.githubusercontent.com/perxel/perxel-spotlight/main/docs/perxel-gate.webp)
+
 - **Search and Ask are independent.** Give it documents, an endpoint, or both. Whatever you leave out is never loaded.
 - **Headless first.** Behaviour, keys, focus, ARIA and state (`data-*`) in React parts you style yourself. A **liquid glass skin** ships as the default, themed with CSS variables.
 - **No platform assumptions.** No Next.js import in the client (navigation is a prop), a Web-standard server helper (`Request` → `Response`: Next route handlers, Workers, Hono, Node), any [AI SDK](https://ai-sdk.dev) model, MCP optional.
 - **Nothing in first load** but the provider and your trigger: the box, the chat, the index and the AI SDK are lazy chunks.
 
 Built for [perxel.com](https://perxel.com) (liquid skin, answers through an MCP server) and [phucbm.com](https://phucbm.com) (its own "research paper" styling on the headless parts, answers from its pages and live data, no MCP).
+
+| perxel.com: the liquid skin's chat panel | phucbm.com: the headless parts, its own styling |
+|---|---|
+| ![The chat panel answering a question, with the pages it used folded under the answer](https://raw.githubusercontent.com/perxel/perxel-spotlight/main/docs/perxel-panel.webp) | ![A plain, paper-like search box on phucbm.com](https://raw.githubusercontent.com/perxel/perxel-spotlight/main/docs/phucbm-gate.webp) |
 
 | Search only | Ask only | Both |
 |---|---|---|

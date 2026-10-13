@@ -2,7 +2,7 @@
 
 Search or ask, like Spotlight. Press ⌘K: the box searches your site as you type, in the browser, with no request and no model call. Press Enter with nothing highlighted and the question goes to an AI chat that answers from your site.
 
-![The liquid skin on perxel.com: results as you type "next", the typed word marked in each row](https://raw.githubusercontent.com/perxel/perxel-spotlight/main/docs/perxel-gate.webp)
+![Spotlight on perxel.com: ⌘K opens one box; it finds pages as you type, Enter asks AI, and "contact" opens the contact form](https://raw.githubusercontent.com/perxel/perxel-spotlight/main/docs/spotlight.gif)
 
 - **Search and Ask are independent.** Give it documents, an endpoint, or both. Whatever you leave out is never loaded.
 - **Headless first.** Behaviour, keys, focus, ARIA and state (`data-*`) in React parts you style yourself. A **liquid glass skin** ships as the default, themed with CSS variables.

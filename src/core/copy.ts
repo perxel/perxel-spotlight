@@ -25,6 +25,7 @@ export const defaultCopy: SpotlightCopy = {
     verify_failed: "We could not check that you are not a bot. Please reload and try again.",
     conversation_limit: "This conversation is at its limit. Start a new chat.",
     budget: "Ask is resting for today. Please try again tomorrow.",
+    config: "Ask is not available right now.",
     upstream: "The answer could not be written. Please try again.",
     bad_request: "That message could not be sent.",
   },

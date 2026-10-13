@@ -23,7 +23,7 @@ import type {AskContext, AskSource, Cited, ToolRun} from "./types.js"
  * status; the panel maps the code to its copy.
  */
 
-export type AskErrorCode = "origin" | "bad_request" | "verify_failed" | "rate_limited" | "conversation_limit" | "budget" | "upstream"
+export type AskErrorCode = "origin" | "bad_request" | "verify_failed" | "rate_limited" | "conversation_limit" | "budget" | "config" | "upstream"
 
 const STATUS: Record<AskErrorCode, number> = {
   origin: 403,
@@ -32,7 +32,28 @@ const STATUS: Record<AskErrorCode, number> = {
   rate_limited: 429,
   conversation_limit: 429,
   budget: 503,
+  config: 503,
   upstream: 502,
+}
+
+/**
+ * A model error's code: `config` when the route is set up wrong (no API key, or the provider
+ * refused it: 401/403), so the visitor is not told to try again and the log says what to fix;
+ * `upstream` for the rest (provider down, timeout).
+ */
+export function modelErrorCode(err: unknown): "config" | "upstream" {
+  let e = err as {name?: unknown; statusCode?: unknown; lastError?: unknown} | undefined
+  // A retried call fails with the last attempt's error inside.
+  if (e?.name === "AI_RetryError" && e.lastError) e = e.lastError as typeof e
+  if (e?.name === "AI_LoadAPIKeyError") return "config"
+  if (e?.name === "AI_APICallError" && (e.statusCode === 401 || e.statusCode === 403)) return "config"
+  return "upstream"
+}
+
+function logError(err: unknown, where: string) {
+  if (where === "model" && modelErrorCode(err) === "config")
+    console.error(`[spotlight] model: the AI provider has no API key or refused it. Check the key the route's model is created with (an empty Worker secret or env var is a common cause).`, err)
+  else console.error(`[spotlight] ${where}:`, err)
 }
 
 /** One answered turn, for `onFinish` (log it, store it, count its cost). */
@@ -104,7 +125,7 @@ export interface AskHandlerOptions {
   maxOutputTokens?: number
   /** Request body bytes (default 256 KB). */
   maxBodyBytes?: number
-  /** Called with errors (model, tool, `onFinish`); default `console.error`. */
+  /** Called with errors (model, tool, `onFinish`); default `console.error`, with a hint when the model has no key or it was refused. */
   onError?: (error: unknown, where: "model" | "tool" | "finish") => void
   /** Extra `streamText` settings (temperature, providerOptions…). */
   settings?: Record<string, unknown>
@@ -164,7 +185,7 @@ export function createAskHandler(options: AskHandlerOptions): (request: Request)
     maxSteps = 4,
     maxOutputTokens = 700,
     maxBodyBytes = 256 * 1024,
-    onError = (err: unknown, where: string) => console.error(`[spotlight] ${where}:`, err),
+    onError = logError,
   } = options
   const cite = options.cite === false ? null : {max: options.cite?.max ?? 4, perResult: options.cite?.perResult ?? 2}
   const ui = new Set(uiTools)
@@ -227,7 +248,14 @@ export function createAskHandler(options: AskHandlerOptions): (request: Request)
     const limited = options.rateLimit ? await options.rateLimit(ctx) : true
     if (limited !== true) return refuse(typeof limited === "string" ? (limited as AskErrorCode) : "rate_limited", {"retry-after": "60"})
 
-    const model = typeof options.model === "function" ? options.model(ctx) : options.model
+    // A model factory that throws (a missing key checked by the site) refuses with `config`.
+    let model: LanguageModel
+    try {
+      model = typeof options.model === "function" ? options.model(ctx) : options.model
+    } catch (err) {
+      onError(err, "model")
+      return refuse("config")
+    }
     const system = typeof options.system === "function" ? await options.system(ctx) : options.system
     const history: ModelMessage[] = turns
       .slice(0, -1)
@@ -311,14 +339,14 @@ export function createAskHandler(options: AskHandlerOptions): (request: Request)
             stream: result.stream,
             onError: (err) => {
               onError(err, "model")
-              return "upstream"
+              return modelErrorCode(err)
             },
           }),
         )
       },
       onError: (err) => {
         onError(err, "model")
-        return "upstream"
+        return modelErrorCode(err)
       },
     })
 

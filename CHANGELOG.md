@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Server: a new error code, `config`, for a route that is set up wrong: the model has no API key, or the provider refused it (401/403). It used to end as `upstream` ("Please try again"), which hid the cause. The default `onError` log says to check the key. A `model` function that throws (a site checking its key) now refuses with `config` (503) before any call. `modelErrorCode(err)` is exported.
+- Copy: `errors.config` ("Ask is not available right now.").
+- README: where API keys come from per platform (OpenNext: `getCloudflareContext().env`, `initOpenNextCloudflareForDev()` for `next dev`).
+
 ## 0.1.0
 
 First release. Built from perxel.com's Ask Perxel (search gate and chat panel) and tried on two sites before release: perxel.com (liquid skin, answers through an MCP server) and phucbm.com (its own paper styling on the headless parts, answers from its pages and live data, no MCP).

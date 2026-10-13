@@ -1,6 +1,6 @@
 {
   "name": "@perxel/spotlight",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Search or ask, like Spotlight: a ⌘K box that searches a site as you type and hands a question to an AI chat on Enter. Headless React parts, an optional liquid glass skin, and a Web-standard server helper.",
   "license": "MIT",
   "author": "Perxel (https://perxel.com)",

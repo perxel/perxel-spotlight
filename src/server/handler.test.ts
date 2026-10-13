@@ -1,7 +1,7 @@
-import {jsonSchema, simulateReadableStream, tool} from "ai"
+import {APICallError, jsonSchema, LoadAPIKeyError, RetryError, simulateReadableStream, tool} from "ai"
 import {MockLanguageModelV4} from "ai/test"
 import {beforeEach, describe, expect, it} from "vitest"
-import {createAskHandler, type AskTurn} from "./handler.js"
+import {createAskHandler, modelErrorCode, type AskTurn} from "./handler.js"
 import {contentSource, mcpSource, passagesOf, resetMcpCache, sectionOf, toolSource} from "./sources.js"
 import {turnstile} from "./turnstile.js"
 
@@ -113,6 +113,43 @@ describe("createAskHandler", () => {
     const limited = createAskHandler({model, rateLimit: () => "budget"})
     expect((await limited(chatRequest([user("hi")]))).status).toBe(503)
     expect(prompts).toHaveLength(0)
+  })
+
+  it("ends with config when the provider refuses the key, upstream otherwise", async () => {
+    const failing = (statusCode: number) =>
+      new MockLanguageModelV4({
+        doStream: async () => {
+          throw new APICallError({message: "Missing Authentication header", url: "https://ai.test", requestBodyValues: {}, statusCode, isRetryable: false})
+        },
+      })
+    const logged: unknown[] = []
+    const refused = createAskHandler({model: failing(401), onError: (e) => void logged.push(e)})
+    const text = await (await refused(chatRequest([user("hi")]))).text()
+    expect(text).toContain('"errorText":"config"')
+    expect(logged).toHaveLength(1)
+    const down = createAskHandler({model: failing(500), onError: () => {}})
+    expect(await (await down(chatRequest([user("hi")]))).text()).toContain('"errorText":"upstream"')
+  })
+
+  it("refuses with config when the model factory throws (a missing key)", async () => {
+    const handler = createAskHandler({
+      model: () => {
+        throw new Error("OPENROUTER_API_KEY is not set")
+      },
+      onError: () => {},
+    })
+    const res = await handler(chatRequest([user("hi")]))
+    expect(res.status).toBe(503)
+    expect(await res.json()).toEqual({code: "config"})
+  })
+
+  it("sorts model errors", () => {
+    const call = (statusCode: number) => new APICallError({message: "x", url: "u", requestBodyValues: {}, statusCode})
+    expect(modelErrorCode(new LoadAPIKeyError({message: "missing"}))).toBe("config")
+    expect(modelErrorCode(call(403))).toBe("config")
+    expect(modelErrorCode(call(429))).toBe("upstream")
+    expect(modelErrorCode(new RetryError({message: "x", reason: "maxRetriesExceeded", errors: [call(401)]}))).toBe("config")
+    expect(modelErrorCode(new Error("boom"))).toBe("upstream")
   })
 
   it("refuses other origins unless allowed, and answers preflight", async () => {

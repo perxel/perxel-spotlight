@@ -1,6 +1,6 @@
 # Plan 018: `@perxel/spotlight` (search or ask, as a standalone React package)
 
-Status (2026-10-13): released. `@perxel/spotlight@0.1.0` on npm (tag v0.1.0, github.com/perxel/perxel-spotlight); perxel-mcp (ingest) and perxel.com (Ask on the package) deployed; phucbm.com committed and pushed, its deploy hit the Cloudflare free-plan KV write limit (10048) and re-runs after 00:00 UTC. Owner browser pass done before release. Open: npm trusted publishing for the next release; phucbm.com's own capped OpenRouter key (it uses the borrowed one).
+Status (2026-10-13): released. `@perxel/spotlight@0.1.0` on npm (tag v0.1.0, github.com/perxel/perxel-spotlight); perxel-mcp (ingest) and perxel.com (Ask on the package) deployed; phucbm.com committed and pushed, its deploy hit the Cloudflare free-plan KV write limit (10048) and re-runs after 00:00 UTC. Owner browser pass done before release. 0.1.1 the same day (the `config` error code, after phucbm.com's empty key; see "0.1.1"), published through a GitHub release with trusted publishing; both sites on `^0.1.1`. Open: phucbm.com's own capped OpenRouter key (it uses the borrowed one).
 Written: 2026-10-12, from a discussion with the owner the same day.
 Related: plan 010 (Ask Perxel), plan 013 (Ask actions), plan 014 (search or ask), plan 015 (search gate), plan 017 (social kit: the packaging precedent), folio-2026-vol2 plan 001 ("MCP and Ask (deferred)", superseded by this plan for phucbm.com).
 
@@ -278,7 +278,7 @@ Each phase ends with the checks listed. Browser checks need the owner's go-ahead
 ## Owner tasks
 
 - **An OpenRouter key for phucbm.com with a monthly spending cap** (openrouter.ai → Keys; no provisioning key here, so Claude cannot make it). Before phucbm.com's Ask is deployed (end of phase 6); local work uses the borrowed key until then.
-- **npm trusted publishing** for `@perxel/spotlight` (npmjs.com → package → Trusted publishing: `perxel/perxel-spotlight`, `publish.yml`). Before phase 8; the package must exist on npm first, so the first publish needs an npm token or `npm login` on this machine, as with the social kit.
+- ~~**npm trusted publishing**~~ for `@perxel/spotlight`: set 2026-10-13 (GitHub Actions, `perxel` / `perxel-spotlight`, `publish.yml`, no environment). A GitHub release now publishes.
 - **Browser passes** at the sync points (desktop and an iPhone): Claude does not drive Chrome without asking.
 
 ## phucbm.com findings
@@ -299,7 +299,8 @@ Each found while putting phucbm.com (and perxel.com) on the package; all fixed i
 | 10 | `contentSource`'s `get_page({section})` assumed markdown headings; phucbm.com's body text has them as plain lines | Plain-text heading fallback (`sectionOf`, `headingsOf`) |
 | 11 | Pages without a CSS reset (the example) broke the rows (`content-box`) | The skin sets `border-box` on its own elements |
 | 12 | The skin's spacing in px looked smaller than the original on perxel.com (18px root on desktop) | Spacing in rem, as the original Tailwind classes were; px kept where the original used px |
-| 13 | (phucbm.com) `next dev` does not read `.dev.vars` (no `initOpenNextCloudflareForDev`), so Ask has no secrets there | Not a package issue: its CLAUDE.md says to put them in `.env.local` to try Ask in dev; `pnpm preview` reads `.dev.vars` |
+| 13 | (phucbm.com) `next dev` does not read `.dev.vars` (no `initOpenNextCloudflareForDev`), so Ask has no secrets there | Not a package issue. First: put them in `.env.local` (never done, so local Ask refused every question). Since 0.1.1: `next.config.ts` calls `initOpenNextCloudflareForDev()` in dev, as perxel.com |
+| 14 | (phucbm.com, live) Every question ended "The answer could not be written": the Worker's `OPENROUTER_API_KEY` was empty, OpenRouter answered 401 `Missing Authentication header`, and the package called it `upstream` ("try again"); the cause only showed in `wrangler tail` | 0.1.1: `config` code (no key, or the provider refused it), the default log says to check the key, a `model` function that throws refuses with `config`. Both sites throw on an empty key; phucbm.com's `GET /api/ask?check` and deploy step (see "0.1.1") |
 
 Token cost per turn (input tokens, one question each, Claude Haiku): `contentSource` on the example's pages 1,567 (one search); phucbm.com similar size; perxel.com through `mcpSource` 4,192 for a WordPress question (two tools). Same order as perxel-mcp's `ask.turn` rows; not measured over a question set.
 
@@ -323,3 +324,13 @@ Token cost per turn (input tokens, one question each, Claude Haiku): `contentSou
 - `@perxel/spotlight@0.1.0` published by the owner (npm 2FA), tag `v0.1.0`. No GitHub release yet: `publish.yml` would try 0.1.0 again and fail (the action has no skip for an existing version); the next version goes through a release once trusted publishing is set on npmjs.com.
 - perxel.com deployed (7e45d00, on `^0.1.0`; the push also carried another session's b991d48). Smoke check: 9 of 10 at first, "front HTML differs" was a one-off right after deploy (identical when checked again). Live: `GET /api/ask` 204, a question without a token `verify_failed`.
 - phucbm.com: pushed (7425d5d); the deploy failed at OpenNext's cache upload, `your account has reached the free usage limit for this operation for today [code: 10048]` (KV writes, the whole account: several deploys that day). The live site kept the previous version. Re-run queued for 00:05 UTC. Each deploy rewrites every prerendered page into KV, so a day with many deploys across perxel.com, phucbm.com and the MCPs can hit it again.
+
+## 0.1.1 (2026-10-13)
+
+Found when phucbm.com answered every question with "The answer could not be written" (finding 14).
+
+- **Cause:** phucbm.com's Worker secret `OPENROUTER_API_KEY` existed but was empty; Turnstile passed, then OpenRouter refused the call (401). Locally the route had no secrets at all (finding 13). perxel.com was fine: `initOpenNextCloudflareForDev` since its move to Workers (July), secrets set by hand in phase 5.
+- **Package** (9980098, release v0.1.1, published by `publish.yml` with trusted publishing): `config` error code and copy, `modelErrorCode(err)`, the hint in the default log, a throwing `model` function refused with `config` (503); README: where keys come from per platform. 41 tests.
+- **phucbm.com** (9617601, be0bf02): the key set again (the borrowed one); `initOpenNextCloudflareForDev()` under `next dev`; the `model` function throws on an empty key; `GET /api/ask?check` (both secrets set and OpenRouter's free `/api/v1/key` takes the key: 204, else 503 with the problems); the deploy runs it. Cloudflare's bot protection challenges GitHub's runners (403 "Just a moment..."), so in CI the check fails only on the route's 503 and warns otherwise; after changing a secret, `curl https://phucbm.com/api/ask?check` by hand. Owner checked Ask on the live site.
+- **perxel.com:** `model()` throws on an empty key; `/api/ask/summary` answers `config` for a missing or refused key; on `^0.1.1`.
+- **Setting a secret:** `wrangler secret put NAME` and paste at the prompt; never pipe a variable that may be empty.
